@@ -21,6 +21,7 @@ from app.models.procedures.models import Procedures
 from app.models.room_usage.models import Room_usage
 from app.models.rooms.models import Rooms
 from app.models.staff.models import Staff
+from app.models.room_status.models import RoomStatus
 
 
 # this is the Alembic Config object, which provides
