@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 class Procedures(Base):
     __tablename__='procedures'
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     procedure_name: Mapped[str]
     description: Mapped[str]
     cost: Mapped[int]

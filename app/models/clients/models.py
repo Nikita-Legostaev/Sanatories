@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 class Clients(Base):
     __tablename__='clients'
 
-    id: Mapped[int] = mapped_column(primary_key=True) 
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True) 
     fullname: Mapped[str]
     birth_date: Mapped[Date] = mapped_column(type_=Date)
     email: Mapped[str]
