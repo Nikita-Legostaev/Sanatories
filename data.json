@@ -1,4 +1,4 @@
-INSERT INTO clients (client_name, birth_date, email, address) VALUES
+INSERT INTO clients (fullname, birth_date, email, address) VALUES
 ('Terri Lopez', '1969-03-21', 'ttaylor@example.org', '4255 Chen Via Apt. 553, Dennisberg, RI 15684'),
 ('Bruce James', '1931-06-09', 'raymond57@example.net', '840 Jason Passage Suite 213, West Susan, AS 25588'),
 ('Amanda Brown', '1969-11-01', 'kayla66@example.org', 'Unit 7944 Box 1527, DPO AP 35385'),
@@ -1000,7 +1000,7 @@ INSERT INTO clients (client_name, birth_date, email, address) VALUES
 ('Kathleen Miles', '1943-05-13', 'patriciagreen@example.com', '82717 Sarah Harbor, Hobbsville, NY 58085'),
 ('Shelby Flores', '1930-12-02', 'smithtiffany@example.org', '648 Edward Gateway Apt. 189, Youngbury, FM 43114');
 
-INSERT INTO staff 
+INSERT INTO staff (fullname, position, phone)
 VALUES
 ( 'Mark Allen', 'Бухгалтер', '89993332211'),
 ( 'Mike Rogers','Директор','89999999999'),
@@ -1008,7 +1008,7 @@ VALUES
 ( 'Julia Tran','Охраник','83333333333'),
 ( 'Judith Rivera','Врач','81232134534')
 
-INSERT INTO accommodations 
+INSERT INTO accommodations (room_type, capacity, daily_rate)
 VALUES
 ( 'Single Room', 1, 100),
 ( 'Double Room', 2, 150),
@@ -1016,7 +1016,7 @@ VALUES
 ( 'Family Room', 5, 200),
 ( 'Dormitory', 10, 50);
 
-INSERT INTO rooms
+INSERT INTO rooms (purpose, capacity)
 VALUES
 ( 'Conference Room', 50),
 ( 'Meeting Room', 20),
@@ -1024,7 +1024,7 @@ VALUES
 ( 'Auditorium', 100),
 ( 'Breakout Room', 10);
 
-INSERT INTO procedures
+INSERT INTO procedures (procedure_name, description, cost)
 VALUES
 ( 'Тайский массаж', 'тутуту', 40),
 ( 'Индийский массаж', 'папапа', 50),
@@ -1033,7 +1033,7 @@ VALUES
 ( 'ИСпанский массаж', 'ророро', 80)
 
 
-INSERT INTO room_usage
+INSERT INTO room_usage (room_id, procedure_id, staff_id, date)
 VALUES
 ( 1, 1, 1, '1972-09-29'),
 (2,2,2,'1972-09-01'),
@@ -1041,26 +1041,26 @@ VALUES
 (4,4,4,'1972-09-03'),
 (5,5,5,'1972-09-04')
 
-INSERT INTO procedure_appointment
+INSERT INTO procedure_appointment (client_id, procedure_id, staff_id, date)
 VALUES
-( 1, 1, 1, '1973-09-01'),
-( 2, 2, 2, '1973-02-01'),
-( 3, 3, 3, '1973-03-15'),
-( 4, 4, 4, '1973-04-20'),
-( 5, 5, 5, '1973-05-25');
+(1, 1, 1, '1973-09-01'),
+(2, 2, 2, '1973-02-01'),
+(3, 3, 3, '1973-03-15'),
+(4, 4, 4, '1973-04-20'),
+(5, 5, 5, '1973-05-25');
 
-INSERT INTO bookings
+INSERT INTO bookings (client_id, accommodation_id, check_in_date, check_out_date, status)
 VALUES
-( 1, 1, '2024-01-01', '2024-01-02', 0),
-( 2, 2, '2024-02-05', '2024-02-06', 1),
-( 3, 3, '2024-03-10', '2024-03-12', 0),
-( 4, 4, '2024-04-15', '2024-04-17', 1),
-( 5, 5, '2024-05-20', '2024-05-22', 0);
+(1, 1, '2024-01-01', '2024-01-02', 0),
+(2, 2, '2024-02-05', '2024-02-06', 1),
+(3, 3, '2024-03-10', '2024-03-12', 0),
+(4, 4, '2024-04-15', '2024-04-17', 1),
+(5, 5, '2024-05-20', '2024-05-22', 0);
 
-INSERT INTO accommodations_usage
+INSERT INTO accommodations_usage (accommodations_id, room_type, start_data, end_data, capacity)
 VALUES
-( 1, 'Двухкомнатная', '2024-01-03', '2024-01-05', 10),
-( 2, 'Однокомнатная', '2024-01-06', '2024-01-08', 5),
-( 3, 'Трехкомнатная', '2024-01-09', '2024-01-11', 15),
-( 4, 'Студия', '2024-01-12', '2024-01-14', 8),
-( 5, 'Люкс', '2024-01-15', '2024-01-17', 20);
+(1, 'Двухкомнатная', '2024-01-03', '2024-01-05', 10),
+(2, 'Однокомнатная', '2024-01-06', '2024-01-08', 5),
+(3, 'Трехкомнатная', '2024-01-09', '2024-01-11', 15),
+(4, 'Студия', '2024-01-12', '2024-01-14', 8),
+(5, 'Люкс', '2024-01-15', '2024-01-17', 20);
