@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="margin: 20px;">
+    <h2>Список клиентов</h2>
+    
+    <!-- Панель управления для выбора диапазона -->
+    <div style="margin-bottom: 20px;">
+        <label>Показать с:</label>
+        <input type="number" id="offset" value="0" min="0" style="width: 80px; margin-right: 10px;">
+        <label>Количество на странице:</label>
+        <input type="number" id="limit" value="10" min="1" style="width: 80px; margin-right: 20px;">
+        <button onclick="loadClients()" 
+                style="padding: 5px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+            Применить
+        </button>
+    </div>
+
+    <!-- Кнопка для добавления нового клиента -->
+    <button 
+        onclick="openAddModal()" 
+        style="margin-bottom: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+        Добавить клиента
+    </button>
+
+    <!-- Таблица клиентов -->
+    <table id="clientsTable" style="width: 100%; border-collapse: collapse; text-align: left; font-family: Arial, sans-serif;">
+        <thead>
+            <tr style="background-color: #f4f4f4; border-bottom: 2px solid #ddd;">
+                <th style="padding: 10px; border: 1px solid #ddd;">Полное имя</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Email</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Адрес</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Дата рождения</th>
+                <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Здесь будет отображаться список клиентов -->
+        </tbody>
+    </table>
+
+    <!-- Модальное окно для добавления клиента -->
+    <div id="addModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Добавить нового клиента</h3>
+        <form id="addForm">
+            <label>Полное имя:</label>
+            <input type="text" id="addFullname" style="width: 100%; margin-bottom: 10px;">
+            <label>Email:</label>
+            <input type="email" id="addEmail" style="width: 100%; margin-bottom: 10px;">
+            <label>Адрес:</label>
+            <input type="text" id="addAddress" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата рождения:</label>
+            <input type="date" id="addBirthDate" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="addClient()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeAddModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+
+    <!-- Модальное окно для редактирования клиента -->
+    <div id="editModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Изменить данные клиента</h3>
+        <form id="editForm">
+            <input type="hidden" id="editClientId">
+            <label>Полное имя:</label>
+            <input type="text" id="editFullname" style="width: 100%; margin-bottom: 10px;">
+            <label>Email:</label>
+            <input type="email" id="editEmail" style="width: 100%; margin-bottom: 10px;">
+            <label>Адрес:</label>
+            <input type="text" id="editAddress" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата рождения:</label>
+            <input type="date" id="editBirthDate" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="updateClient()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Функция для загрузки клиентов с учетом offset и limit
+    async function loadClients() {
+        const offset = document.getElementById('offset').value;
+        const limit = document.getElementById('limit').value;
+        
+        try {
+            const response = await fetch(`/clients/all?offset=${offset}&limit=${limit}`);
+            const clients = await response.json();
+            const tableBody = document.querySelector('#clientsTable tbody');
+            tableBody.innerHTML = ''; // Очистить текущую таблицу
+
+            if (clients.length > 0) {
+                clients.forEach(client => {
+                    const row = document.createElement('tr');
+                    row.id = `client-row-${client.id}`;
+                    row.innerHTML = `
+                        <td style="padding: 10px; border: 1px solid #ddd;">${client.fullname}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${client.email}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${client.address}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${client.birth_date}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                            <button 
+                                style="margin-right: 5px; padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;"
+                                onclick="openEditModal('${client.id}', '${client.fullname}', '${client.email}', '${client.address}', '${client.birth_date}')">
+                                Изменить
+                            </button>
+                            <button 
+                                style="padding: 5px 10px; background-color: #f44336; color: white; border: none; cursor: pointer;" 
+                                onclick="deleteClient('${client.id}')">
+                                Удалить
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="5" style="padding: 10px; text-align: center; color: #666;">Нет данных для отображения</td>`;
+                tableBody.appendChild(row);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки клиентов:', error);
+            alert('Ошибка при загрузке данных');
+        }
+    }
+
+    // Вызов загрузки клиентов при старте страницы
+    window.onload = loadClients;
+
+    // Функции для добавления клиента
+    function openAddModal() {
+        document.getElementById('addModal').style.display = 'block';
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    async function addClient() {
+        const fullname = document.getElementById('addFullname').value;
+        const email = document.getElementById('addEmail').value;
+        const address = document.getElementById('addAddress').value;
+        const birthDate = document.getElementById('addBirthDate').value;
+
+        const data = { fullname, email, address, birth_date: birthDate };
+
+        try {
+            const response = await fetch('/clients/add_client', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('Клиент успешно добавлен');
+                loadClients(); // Перезагружаем список клиентов
+                closeAddModal(); // Закрываем окно
+            } else {
+                alert('Ошибка при добавлении клиента');
+            }
+        } catch (error) {
+            console.error('Ошибка добавления клиента:', error);
+            alert('Ошибка при добавлении клиента');
+        }
+    }
+
+    // Функции для редактирования клиента
+    function openEditModal(id, fullname, email, address, birthDate) {
+        document.getElementById('editClientId').value = id;
+        document.getElementById('editFullname').value = fullname;
+        document.getElementById('editEmail').value = email;
+        document.getElementById('editAddress').value = address;
+        document.getElementById('editBirthDate').value = birthDate;
+        document.getElementById('editModal').style.display = 'block';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function updateClient() {
+        const id = document.getElementById('editClientId').value;
+        const fullname = document.getElementById('editFullname').value;
+        const email = document.getElementById('editEmail').value;
+        const address = document.getElementById('editAddress').value;
+        const birthDate = document.getElementById('editBirthDate').value;
+
+        const data = { fullname, email, address, birth_date: birthDate };
+
+        try {
+            const response = await fetch(`/clients/edit/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('Данные клиента обновлены');
+                loadClients(); // Перезагружаем список клиентов
+                closeEditModal(); // Закрываем окно
+            } else {
+                alert('Ошибка при обновлении клиента');
+            }
+        } catch (error) {
+            console.error('Ошибка обновления клиента:', error);
+            alert('Ошибка при обновлении клиента');
+        }
+    }
+
+    // Функция для удаления клиента
+    async function deleteClient(id) {
+        if (confirm('Вы уверены, что хотите удалить этого клиента?')) {
+            try {
+                const response = await fetch(`/clients/remove/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    alert('Клиент успешно удален');
+                    loadClients(); // Перезагружаем список клиентов
+                } else {
+                    alert('Ошибка при удалении клиента');
+                }
+            } catch (error) {
+                console.error('Ошибка удаления клиента:', error);
+                alert('Ошибка при удалении клиента');
+            }
+        }
+    }
+</script>
+{% endblock %}

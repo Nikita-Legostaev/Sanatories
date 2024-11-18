@@ -16,7 +16,7 @@ async def get_all_rooms(offset: int = 0, limit: int = 10):
     all_client = await RoomsRepositories.get_all()
     return all_client[offset:limit]
 
-@router.post("")
+@router.post("/add")
 async def add_room(
     room: SNewRoom,
 ):
@@ -27,7 +27,7 @@ async def add_room(
     return {"detail": "Успешно"}
 
 
-@router.delete("/{room_id}")
+@router.delete("/remove/{room_id}")
 async def remove_room(
     room_id: int,
 ):
@@ -38,13 +38,13 @@ async def remove_room(
     return {"detail": "Команта успешно удалёна"}
 
 
-@router.patch("/{room_id}")
+@router.patch("/edit/{room_id}")
 async def update_room(
     room_id: int,
     SRoom: SNewRoom,  
     ):
     room = await RoomsRepositories.find_by_id(id=room_id)
-    if not room_id or room:
+    if not room:
         raise HTTPException(status_code=404, detail="Клиент не найден")
     await RoomsRepositories.update(id=room_id, **SRoom.model_dump())
     return {"detail": "Комната успешно изменёна"}

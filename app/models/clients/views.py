@@ -16,7 +16,7 @@ async def get_all_clients(offset: int = 0, limit: int = 10):
     all_client = await ClientRepository.get_all()
     return all_client[offset:limit]
 
-@router.post("")
+@router.post("/add_client")
 async def add_client(
     client: SNewClient,
 ):
@@ -29,7 +29,7 @@ async def add_client(
     return {"detail": "Успешно"}
 
 
-@router.delete("/{client_id}")
+@router.delete("/remove/{client_id}")
 async def remove_client(
     client_id: int,
 ):
@@ -38,7 +38,7 @@ async def remove_client(
     return {"detail": "Клиент успешно удалён"}
 
 
-@router.patch("/{client_id}")
+@router.patch("/edit/{client_id}")
 async def update_client(
     client_id: int,
     SClient: SNewClient,  
