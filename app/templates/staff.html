@@ -131,6 +131,10 @@
         const fullname = document.getElementById('addFullname').value;
         const position = document.getElementById('addPosition').value;
         const phone = document.getElementById('addPhone').value;
+        if (!fullname || !position || !phone) {
+            alert('Пожалуйста, заполните все поля');
+            return;
+        }
 
         const data = { fullname, position, phone };
 
@@ -172,6 +176,11 @@
         const fullname = document.getElementById('editFullname').value;
         const position = document.getElementById('editPosition').value;
         const phone = document.getElementById('editPhone').value;
+
+        if (!fullname || !position || !phone) {
+            alert('Пожалуйста, заполните все поля');
+            return;
+        }
 
         const data = { fullname, position, phone };
 

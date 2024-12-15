@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="margin: 20px;">
+    <h2>Список использования номеров</h2>
+    
+    <!-- Панель управления для выбора диапазона -->
+    <div style="margin-bottom: 20px;">
+        <label>Показать с:</label>
+        <input type="number" id="offset" value="0" min="0" style="width: 80px; margin-right: 10px;">
+        <label>Количество на странице:</label>
+        <input type="number" id="limit" value="10" min="1" style="width: 80px; margin-right: 20px;">
+        <button onclick="loadAccommodationsUsage()" 
+                style="padding: 5px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+            Применить
+        </button>
+    </div>
+
+    <!-- Кнопка для добавления нового использования номера -->
+    <button 
+        onclick="openAddModal()" 
+        style="margin-bottom: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+        Добавить использование
+    </button>
+
+    <!-- Таблица использования номеров -->
+    <table id="accommodationsUsageTable" style="width: 100%; border-collapse: collapse; text-align: left; font-family: Arial, sans-serif;">
+        <thead>
+            <tr style="background-color: #f4f4f4; border-bottom: 2px solid #ddd;">
+                <th style="padding: 10px; border: 1px solid #ddd;">ID номера</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Дата начала</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Дата окончания</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Здесь будет отображаться список использования номеров -->
+        </tbody>
+    </table>
+
+    <!-- Модальное окно для добавления использования -->
+    <div id="addModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Добавить новое использование номера</h3>
+        <form id="addForm">
+            <label>ID номера:</label>
+            <input type="number" id="addAccommodationId" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата начала:</label>
+            <input type="date" id="addStartDate" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата окончания:</label>
+            <input type="date" id="addEndDate" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="addAccommodationUsage()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeAddModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+
+    <!-- Модальное окно для редактирования использования -->
+    <div id="editModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Редактировать использование номера</h3>
+        <form id="editForm">
+            <input type="hidden" id="editAccommodationUsageId">
+            <label>ID номера:</label>
+            <input type="number" id="editAccommodationId" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата начала:</label>
+            <input type="date" id="editStartDate" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата окончания:</label>
+            <input type="date" id="editEndDate" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="updateAccommodationUsage()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Функция для загрузки использования номеров с учетом offset и limit
+    async function loadAccommodationsUsage() {
+        const offset = document.getElementById('offset').value;
+        const limit = document.getElementById('limit').value;
+        
+        try {
+            const response = await fetch(`/accommodations_usage/all?offset=${offset}&limit=${limit}`);
+            const accommodationsUsage = await response.json();
+            const tableBody = document.querySelector('#accommodationsUsageTable tbody');
+            tableBody.innerHTML = ''; // Очистить текущую таблицу
+
+            if (accommodationsUsage.length > 0) {
+                accommodationsUsage.forEach(usage => {
+                    const row = document.createElement('tr');
+                    row.id = `accommodation-usage-row-${usage.id}`;
+                    row.innerHTML = `
+                        <td style="padding: 10px; border: 1px solid #ddd;">${usage.accommodations_id}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${usage.start_data}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${usage.end_data}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                            <button 
+                                style="margin-right: 5px; padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;"
+                                onclick="openEditModal('${usage.id}', ${usage.accommodations_id}, '${usage.start_data}', '${usage.end_data}')">
+                                Изменить
+                            </button>
+                            <button 
+                                style="padding: 5px 10px; background-color: #f44336; color: white; border: none; cursor: pointer;" 
+                                onclick="deleteAccommodationUsage('${usage.id}')">
+                                Удалить
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" style="padding: 10px; text-align: center; color: #666;">Нет данных для отображения</td>`;
+                tableBody.appendChild(row);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки использования номеров:', error);
+            alert('Ошибка при загрузке данных');
+        }
+    }
+
+    // Вызов загрузки использования номеров при старте страницы
+    window.onload = loadAccommodationsUsage;
+
+    // Функции для добавления использования номера
+    function openAddModal() {
+        document.getElementById('addModal').style.display = 'block';
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    async function addAccommodationUsage() {
+        const startDate = document.getElementById('addStartDate').value;
+        const endDate = document.getElementById('addEndDate').value;
+        const accommodationId = document.getElementById('addAccommodationId').value;
+
+        if (!startDate || !endDate || !accommodationId) {
+            alert('Пожалуйста, заполните все поля');
+            return;
+        }
+
+        const body = JSON.stringify({
+            start_data: startDate,
+            end_data: endDate,
+            accommodations_id: accommodationId
+        });
+
+        try {
+            const response = await fetch('/accommodations_usage/add_accommodations_usage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: body
+            });
+
+            if (response.ok) {
+                alert('Успешно добавлено');
+                closeAddModal();
+                loadAccommodationsUsage();
+            } else {
+                alert('Ошибка при добавлении использования');
+            }
+        } catch (error) {
+            console.error('Ошибка при добавлении использования:', error);
+            alert('Ошибка при добавлении данных');
+        }
+    }
+
+    // Функции для редактирования использования номера
+    function openEditModal(id, accommodationId, startDate, endDate) {
+        document.getElementById('editAccommodationUsageId').value = id;
+        document.getElementById('editAccommodationId').value = accommodationId;
+        document.getElementById('editStartDate').value = startDate;
+        document.getElementById('editEndDate').value = endDate;
+        document.getElementById('editModal').style.display = 'block';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function updateAccommodationUsage() {
+        const id = document.getElementById('editAccommodationUsageId').value;
+        const startDate = document.getElementById('editStartDate').value;
+        const endDate = document.getElementById('editEndDate').value;
+        const accommodationId = document.getElementById('editAccommodationId').value;
+
+        if (!startDate || !endDate || !accommodationId) {
+            alert('Пожалуйста, заполните все поля');
+            return;
+        }
+
+        const body = JSON.stringify({
+            start_data: startDate,
+            end_data: endDate,
+            accommodations_id: accommodationId
+        });
+
+        try {
+            const response = await fetch(`/accommodations_usage/edit/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: body
+            });
+
+            if (response.ok) {
+                alert('Успешно обновлено');
+                closeEditModal();
+                loadAccommodationsUsage();
+            } else {
+                alert('Ошибка при обновлении использования');
+            }
+        } catch (error) {
+            console.error('Ошибка при обновлении использования:', error);
+            alert('Ошибка при обновлении данных');
+        }
+    }
+
+    // Функция для удаления использования
+    async function deleteAccommodationUsage(id) {
+        const confirmation = confirm('Вы уверены, что хотите удалить?');
+        if (confirmation) {
+            try {
+                const response = await fetch(`/accommodations_usage/delete/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Использование удалено');
+                    loadAccommodationsUsage();
+                } else {
+                    alert('Ошибка при удалении');
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении использования:', error);
+                alert('Ошибка при удалении данных');
+            }
+        }
+    }
+
+    function validateEmail(email) {
+    const re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return re.test(String(email).toLowerCase());
+}
+</script>
+{% endblock %}

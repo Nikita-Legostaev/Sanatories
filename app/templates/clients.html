@@ -2,7 +2,24 @@
 {% block content %}
 <div style="margin: 20px;">
     <h2>Список клиентов</h2>
-    
+
+    <!-- Панель управления для поиска -->
+    <div style="margin-bottom: 20px;">
+        <label>Полное имя:</label>
+        <input type="text" id="searchFullname" style="width: 200px; margin-right: 10px;">
+        <label>Email:</label>
+        <input type="email" id="searchEmail" style="width: 200px; margin-right: 10px;">
+        <label>Адрес:</label>
+        <input type="text" id="searchAddress" style="width: 200px; margin-right: 10px;">
+        <label>Дата рождения:</label>
+        <input type="date" id="searchBirthDate" style="width: 200px; margin-right: 20px;">
+        
+        <button onclick="searchClients()" 
+                style="padding: 5px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+            ПОИСК
+        </button>
+    </div>
+
     <!-- Панель управления для выбора диапазона -->
     <div style="margin-bottom: 20px;">
         <label>Показать с:</label>
@@ -74,12 +91,23 @@
     </div>
 </div>
 
+<div id="pagination" style="margin-top: 20px; text-align: center;">
+    <button id="prevPageBtn" onclick="changePage('prev')" style="padding: 5px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+        Предыдущая страница
+    </button>
+    <span id="pageInfo" style="margin: 0 10px;">Страница 1</span>
+    <button id="nextPageBtn" onclick="changePage('next')" style="padding: 5px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+        Следующая страница
+    </button>
+</div>
+
 <script>
+
+    let currentPage = 1; // Текущая страница
+    let limit = 10; // Начальное количество клиентов на странице
+    let offset = 0; // Начальный offset (смещение)
     // Функция для загрузки клиентов с учетом offset и limit
     async function loadClients() {
-        const offset = document.getElementById('offset').value;
-        const limit = document.getElementById('limit').value;
-        
         try {
             const response = await fetch(`/clients/all?offset=${offset}&limit=${limit}`);
             const clients = await response.json();
@@ -96,13 +124,11 @@
                         <td style="padding: 10px; border: 1px solid #ddd;">${client.address}</td>
                         <td style="padding: 10px; border: 1px solid #ddd;">${client.birth_date}</td>
                         <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
-                            <button 
-                                style="margin-right: 5px; padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;"
+                            <button style="margin-right: 5px; padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;"
                                 onclick="openEditModal('${client.id}', '${client.fullname}', '${client.email}', '${client.address}', '${client.birth_date}')">
                                 Изменить
                             </button>
-                            <button 
-                                style="padding: 5px 10px; background-color: #f44336; color: white; border: none; cursor: pointer;" 
+                            <button style="padding: 5px 10px; background-color: #f44336; color: white; border: none; cursor: pointer;" 
                                 onclick="deleteClient('${client.id}')">
                                 Удалить
                             </button>
@@ -119,39 +145,116 @@
             console.error('Ошибка загрузки клиентов:', error);
             alert('Ошибка при загрузке данных');
         }
+
+        updatePagination();
     }
 
-    // Вызов загрузки клиентов при старте страницы
-    window.onload = loadClients;
+    // Функция для поиска клиентов
+    async function searchClients() {
+    const fullname = document.getElementById('searchFullname').value;
+    const email = document.getElementById('searchEmail').value;
+    const address = document.getElementById('searchAddress').value;
+    const birthDate = document.getElementById('searchBirthDate').value;
+    const offset = document.getElementById('offset').value;
+    const limit = document.getElementById('limit').value;
 
-    // Функции для добавления клиента
+    // Создаем объект с параметрами запроса, исключая пустые значения
+    const params = new URLSearchParams();
+    if (fullname) params.append('fullname', fullname);
+    if (email) params.append('email', email);
+    if (address) params.append('address', address);
+    if (birthDate) params.append('birth_date', birthDate);
+    params.append('offset', offset);
+    params.append('limit', limit);
+
+    try {
+        // Отправляем запрос с параметрами
+        const response = await fetch(`/clients/search/?${params.toString()}`);
+        const clients = await response.json();
+        const tableBody = document.querySelector('#clientsTable tbody');
+        tableBody.innerHTML = ''; // Очистить текущую таблицу
+
+        if (clients.length > 0) {
+            clients.forEach(client => {
+                const row = document.createElement('tr');
+                row.id = `client-row-${client.id}`;
+                row.innerHTML = `
+                    <td style="padding: 10px; border: 1px solid #ddd;">${client.fullname}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">${client.email}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">${client.address}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">${client.birth_date}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                        <button 
+                            style="margin-right: 5px; padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;"
+                            onclick="openEditModal('${client.id}', '${client.fullname}', '${client.email}', '${client.address}', '${client.birth_date}')">
+                            Изменить
+                        </button>
+                        <button 
+                            style="padding: 5px 10px; background-color: #f44336; color: white; border: none; cursor: pointer;" 
+                            onclick="deleteClient('${client.id}')">
+                            Удалить
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } else {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="5" style="padding: 10px; text-align: center; color: #666;">Нет данных для отображения</td>`;
+            tableBody.appendChild(row);
+        }
+    } catch (error) {
+        console.error('Ошибка поиска клиентов:', error);
+        alert('Ошибка при поиске клиентов');
+    }
+}
+
+    // Функция открытия модального окна для добавления клиента
     function openAddModal() {
         document.getElementById('addModal').style.display = 'block';
     }
 
+    // Функция закрытия модального окна для добавления клиента
     function closeAddModal() {
         document.getElementById('addModal').style.display = 'none';
     }
 
+    // Функция добавления клиента
     async function addClient() {
         const fullname = document.getElementById('addFullname').value;
         const email = document.getElementById('addEmail').value;
         const address = document.getElementById('addAddress').value;
         const birthDate = document.getElementById('addBirthDate').value;
 
-        const data = { fullname, email, address, birth_date: birthDate };
+        if (!fullname || !email || !address || !birthDate) {
+        alert("Все поля должны быть заполнены.");
+        return;
+    }
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+    if (!emailRegex.test(email)) {
+        alert("Неверный формат email.");
+        return;
+    }
+
 
         try {
             const response = await fetch('/clients/add_client', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fullname,
+                    email,
+                    address,
+                    birth_date: birthDate
+                })
             });
 
             if (response.ok) {
-                alert('Клиент успешно добавлен');
+                alert('Добавлено');
+                closeAddModal();
                 loadClients(); // Перезагружаем список клиентов
-                closeAddModal(); // Закрываем окно
             } else {
                 alert('Ошибка при добавлении клиента');
             }
@@ -161,40 +264,59 @@
         }
     }
 
-    // Функции для редактирования клиента
-    function openEditModal(id, fullname, email, address, birthDate) {
+    // Функция открытия модального окна для редактирования клиента
+    function openEditModal(id, fullname, email, address, birth_date) {
         document.getElementById('editClientId').value = id;
         document.getElementById('editFullname').value = fullname;
         document.getElementById('editEmail').value = email;
         document.getElementById('editAddress').value = address;
-        document.getElementById('editBirthDate').value = birthDate;
+        document.getElementById('editBirthDate').value = birth_date;
         document.getElementById('editModal').style.display = 'block';
     }
 
+    // Функция закрытия модального окна для редактирования клиента
     function closeEditModal() {
         document.getElementById('editModal').style.display = 'none';
     }
 
+    // Функция обновления клиента
     async function updateClient() {
         const id = document.getElementById('editClientId').value;
         const fullname = document.getElementById('editFullname').value;
         const email = document.getElementById('editEmail').value;
         const address = document.getElementById('editAddress').value;
         const birthDate = document.getElementById('editBirthDate').value;
+        
+        if (!fullname || !email || !address || !birthDate) {
+        alert("Все поля должны быть заполнены.");
+        return;
+    }
 
-        const data = { fullname, email, address, birth_date: birthDate };
+    // Проверка на правильность формата email
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+    if (!emailRegex.test(email)) {
+        alert("Неверный формат email.");
+        return;
+    }
 
         try {
             const response = await fetch(`/clients/edit/${id}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fullname,
+                    email,
+                    address,
+                    birth_date: birthDate
+                })
             });
 
             if (response.ok) {
-                alert('Данные клиента обновлены');
+                alert('Изменено');
+                closeEditModal();
                 loadClients(); // Перезагружаем список клиентов
-                closeEditModal(); // Закрываем окно
             } else {
                 alert('Ошибка при обновлении клиента');
             }
@@ -206,23 +328,52 @@
 
     // Функция для удаления клиента
     async function deleteClient(id) {
-        if (confirm('Вы уверены, что хотите удалить этого клиента?')) {
-            try {
-                const response = await fetch(`/clients/remove/${id}`, {
-                    method: 'DELETE',
-                });
+        try {
+            const response = await fetch(`/clients/remove/${id}`, {
+                method: 'DELETE'
+            });
 
-                if (response.ok) {
-                    alert('Клиент успешно удален');
-                    loadClients(); // Перезагружаем список клиентов
-                } else {
-                    alert('Ошибка при удалении клиента');
-                }
-            } catch (error) {
-                console.error('Ошибка удаления клиента:', error);
+            if (response.ok) {
+                alert('Удалено');
+                loadClients(); // Перезагружаем список клиентов после удаления
+            } else {
                 alert('Ошибка при удалении клиента');
             }
+        } catch (error) {
+            console.error('Ошибка удаления клиента:', error);
+            alert('Ошибка при удалении клиента');
         }
     }
+    function updatePagination() {
+        document.getElementById('pageInfo').innerText = `Страница ${currentPage}`;
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage === getTotalPages();
+    }
+
+    // Функция для изменения страницы
+    function changePage(direction) {
+        if (direction === 'prev' && currentPage > 1) {
+            currentPage--;
+            limit -= 10;
+            offset -= 10;
+        } else if (direction === 'next') {
+            currentPage++;
+            limit += 10;
+            offset += 10;
+        }
+        loadClients();
+    }
+
+    // Получение общего количества страниц
+    function getTotalPages() {
+        const totalClients = 100; // Пример
+        return Math.ceil(totalClients / limit);
+    }
+
+    // Вызов загрузки клиентов при старте страницы
+    window.onload = loadClients;
 </script>
 {% endblock %}

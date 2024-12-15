@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div style="margin: 20px;">
-    <h2>Список комнат</h2>
+    <h2>Список кабинетов</h2>
     
     <!-- Панель управления для выбора диапазона -->
     <div style="margin-bottom: 20px;">
@@ -26,7 +26,7 @@
     <table id="roomsTable" style="width: 100%; border-collapse: collapse; text-align: left; font-family: Arial, sans-serif;">
         <thead>
             <tr style="background-color: #f4f4f4; border-bottom: 2px solid #ddd;">
-                <th style="padding: 10px; border: 1px solid #ddd;">Цель</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Вид</th>
                 <th style="padding: 10px; border: 1px solid #ddd;">Вместимость</th>
                 <th style="padding: 10px; border: 1px solid #ddd;">Действия</th>
             </tr>
@@ -125,6 +125,11 @@
         const purpose = document.getElementById('addPurpose').value;
         const capacity = document.getElementById('addCapacity').value;
 
+        if (!purpose || !capacity) {
+            alert('Пожалуйста, заполните все поля');
+            return;
+        }
+
         const data = { purpose, capacity };
 
         try {
@@ -163,6 +168,11 @@
         const id = document.getElementById('editRoomId').value;
         const purpose = document.getElementById('editPurpose').value;
         const capacity = document.getElementById('editCapacity').value;
+
+        if (!purpose || !capacity) {
+            alert('Пожалуйста, заполните все поля');
+            return;
+        }
 
         const data = { purpose, capacity };
 

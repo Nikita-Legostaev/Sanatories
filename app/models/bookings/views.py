@@ -31,7 +31,7 @@ async def add_bookings(
     return {"detail": "Успешно"}
 
 
-@router.delete("/{bookings_id}")
+@router.delete("/delete/{bookings_id}")
 async def remove_bookings(
     bookings_id: int,
 ):
@@ -42,7 +42,7 @@ async def remove_bookings(
     return {"detail": "Успешно удалёно"}
 
 
-@router.patch("/{bookings_id}")
+@router.patch("/edit/{bookings_id}")
 async def update_bookings(
     bookings_id: int,
     SNewBooking: SNewBooking,  

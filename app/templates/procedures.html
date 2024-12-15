@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="margin: 20px;">
+    <h2>Список процедур</h2>
+    
+    <!-- Панель управления для выбора диапазона -->
+    <div style="margin-bottom: 20px;">
+        <label>Показать с:</label>
+        <input type="number" id="offset" value="0" min="0" style="width: 80px; margin-right: 10px;">
+        <label>Количество на странице:</label>
+        <input type="number" id="limit" value="10" min="1" style="width: 80px; margin-right: 20px;">
+        <button onclick="loadProcedures()" 
+                style="padding: 5px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+            Применить
+        </button>
+    </div>
+
+    <!-- Кнопка для добавления новой процедуры -->
+    <button 
+        onclick="openAddModal()" 
+        style="margin-bottom: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+        Добавить процедуру
+    </button>
+
+    <!-- Таблица процедур -->
+    <table id="proceduresTable" style="width: 100%; border-collapse: collapse; text-align: left; font-family: Arial, sans-serif;">
+        <thead>
+            <tr style="background-color: #f4f4f4; border-bottom: 2px solid #ddd;">
+                <th style="padding: 10px; border: 1px solid #ddd;">Название процедуры</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Описание</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Стоимость</th> <!-- Заменено на стоимость -->
+                <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Здесь будет отображаться список процедур -->
+        </tbody>
+    </table>
+
+    <!-- Модальное окно для добавления процедуры -->
+    <div id="addModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Добавить новую процедуру</h3>
+        <form id="addForm">
+            <label>Название процедуры:</label>
+            <input type="text" id="addName" style="width: 100%; margin-bottom: 10px;">
+            <label>Описание:</label>
+            <input type="text" id="addDescription" style="width: 100%; margin-bottom: 10px;">
+            <label>Стоимость:</label> <!-- Заменено на стоимость -->
+            <input type="number" id="addCost" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="addProcedure()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeAddModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+
+    <!-- Модальное окно для редактирования процедуры -->
+    <div id="editModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Изменить данные процедуры</h3>
+        <form id="editForm">
+            <input type="hidden" id="editProcedureId">
+            <label>Название процедуры:</label>
+            <input type="text" id="editName" style="width: 100%; margin-bottom: 10px;">
+            <label>Описание:</label>
+            <input type="text" id="editDescription" style="width: 100%; margin-bottom: 10px;">
+            <label>Стоимость:</label> <!-- Заменено на стоимость -->
+            <input type="number" id="editCost" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="updateProcedure()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Функция для загрузки процедур с учетом offset и limit
+    async function loadProcedures() {
+        const offset = document.getElementById('offset').value;
+        const limit = document.getElementById('limit').value;
+        
+        try {
+            const response = await fetch(`/procedure/all?offset=${offset}&limit=${limit}`);
+            const procedures = await response.json();
+            const tableBody = document.querySelector('#proceduresTable tbody');
+            tableBody.innerHTML = ''; // Очистить текущую таблицу
+
+            if (procedures.length > 0) {
+                procedures.forEach(procedure => {
+                    const row = document.createElement('tr');
+                    row.id = `procedure-row-${procedure.id}`;
+                    row.innerHTML = `
+                        <td style="padding: 10px; border: 1px solid #ddd;">${procedure.procedure_name}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${procedure.description}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${procedure.cost}</td> <!-- Заменено на стоимость -->
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                            <button 
+                                style="margin-right: 5px; padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;"
+                                onclick="openEditModal('${procedure.id}', '${procedure.procedure_name}', '${procedure.description}', '${procedure.cost}')">
+                                Изменить
+                            </button>
+                            <button 
+                                style="padding: 5px 10px; background-color: #f44336; color: white; border: none; cursor: pointer;" 
+                                onclick="deleteProcedure('${procedure.id}')">
+                                Удалить
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" style="padding: 10px; text-align: center; color: #666;">Нет данных для отображения</td>`;
+                tableBody.appendChild(row);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки процедур:', error);
+            alert('Ошибка при загрузке данных');
+        }
+    }
+
+    // Вызов загрузки процедур при старте страницы
+    window.onload = loadProcedures;
+
+    // Функции для добавления процедуры
+    function openAddModal() {
+        document.getElementById('addModal').style.display = 'block';
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    async function addProcedure() {
+        const procedure_name = document.getElementById('addName').value;
+        const description = document.getElementById('addDescription').value;
+        const cost = document.getElementById('addCost').value;  // Используем cost вместо creation_date
+
+        if (!procedure_name || !description || !cost) {
+            alert('Все поля должны быть заполнены');
+            return;
+        }
+
+        const data = { procedure_name, description, cost };
+
+        try {
+            const response = await fetch('/procedure/add_procedure', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('Процедура успешно добавлена');
+                loadProcedures(); // Перезагружаем список процедур
+                closeAddModal(); // Закрываем модальное окно
+            } else {
+                alert('Ошибка при добавлении процедуры');
+            }
+        } catch (error) {
+            console.error('Ошибка при добавлении процедуры:', error);
+            alert('Ошибка при добавлении процедуры');
+        }
+    }
+
+    // Функции для редактирования процедуры
+    function openEditModal(id, procedure_name, description, cost) {
+        document.getElementById('editProcedureId').value = id;
+        document.getElementById('editName').value = procedure_name;
+        document.getElementById('editDescription').value = description;
+        document.getElementById('editCost').value = cost;  // Используем cost вместо creation_date
+
+        document.getElementById('editModal').style.display = 'block';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function updateProcedure() {
+        const id = document.getElementById('editProcedureId').value;
+        const procedure_name = document.getElementById('editName').value;
+        const description = document.getElementById('editDescription').value;
+        const cost = document.getElementById('editCost').value;  // Используем cost вместо creation_date
+
+        if (!procedure_name || !description || !cost) {
+            alert('Все поля должны быть заполнены');
+            return;
+        }
+
+        const data = { procedure_name, description, cost };
+
+        try {
+            const response = await fetch(`/procedure/edit/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('Процедура успешно обновлена');
+                loadProcedures(); // Перезагружаем список процедур
+                closeEditModal(); // Закрываем модальное окно
+            } else {
+                alert('Ошибка при обновлении процедуры');
+            }
+        } catch (error) {
+            console.error('Ошибка при обновлении процедуры:', error);
+            alert('Ошибка при обновлении процедуры');
+        }
+    }
+
+    // Функция для удаления процедуры
+    async function deleteProcedure(id) {
+        if (confirm('Вы уверены, что хотите удалить эту процедуру?')) {
+            try {
+                const response = await fetch(`/procedure/delete/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    alert('Процедура успешно удалена');
+                    loadProcedures(); // Перезагружаем список процедур
+                } else {
+                    alert('Ошибка при удалении процедуры');
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении процедуры:', error);
+                alert('Ошибка при удалении процедуры');
+            }
+        }
+    }
+</script>
+
+{% endblock %}

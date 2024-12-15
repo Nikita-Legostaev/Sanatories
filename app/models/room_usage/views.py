@@ -29,7 +29,7 @@ async def add_room_usage(
     return {"detail": "Успешно"}
 
 
-@router.delete("/{room_usage_id}")
+@router.delete("/delete/{room_usage_id}")
 async def remove_room_usage(
     room_usage_id: int,
 ):
@@ -40,7 +40,7 @@ async def remove_room_usage(
     return {"detail": "Успешно удалёно"}
 
 
-@router.patch("/{room_usage_id}")
+@router.patch("/edit/{room_usage_id}")
 async def update_room_usage(
     room_usage_id: int,
     SNewRoomUsage: SNewRoomUsage,  

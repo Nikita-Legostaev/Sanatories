@@ -28,7 +28,7 @@ async def add_accommodations(
     return {"detail": "Успешно"}
 
 
-@router.delete("/{accommodations_id}")
+@router.delete("/delete/{accommodations_id}")
 async def remove_accommodations(
     accommodations_id: int,
 ):
@@ -39,7 +39,7 @@ async def remove_accommodations(
     return {"detail": "Успешно удалёно"}
 
 
-@router.patch("/{accommodations_id}")
+@router.patch("/edit/{accommodations_id}")
 async def update_accommodations(
     accommodations_id: int,
     SNewAccommodations: SNewAccommodations,  

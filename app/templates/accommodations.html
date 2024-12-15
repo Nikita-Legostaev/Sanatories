@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="margin: 20px;">
+    <h2>Список номеров</h2>
+    
+    <!-- Панель управления для выбора диапазона -->
+    <div style="margin-bottom: 20px;">
+        <label>Показать с:</label>
+        <input type="number" id="offset" value="0" min="0" style="width: 80px; margin-right: 10px;">
+        <label>Количество на странице:</label>
+        <input type="number" id="limit" value="10" min="1" style="width: 80px; margin-right: 20px;">
+        <button onclick="loadAccommodations()" 
+                style="padding: 5px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+            Применить
+        </button>
+    </div>
+
+    <!-- Кнопка для добавления нового номера -->
+    <button 
+        onclick="openAddModal()" 
+        style="margin-bottom: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+        Добавить номер
+    </button>
+
+    <!-- Таблица номеров -->
+    <table id="accommodationsTable" style="width: 100%; border-collapse: collapse; text-align: left; font-family: Arial, sans-serif;">
+        <thead>
+            <tr style="background-color: #f4f4f4; border-bottom: 2px solid #ddd;">
+                <th style="padding: 10px; border: 1px solid #ddd;">Тип комнаты</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Вместимость</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Ежедневная ставка</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Здесь будет отображаться список номеров -->
+        </tbody>
+    </table>
+
+    <!-- Модальное окно для добавления номера -->
+    <div id="addModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Добавить новый номер</h3>
+        <form id="addForm">
+            <label>Тип комнаты:</label>
+            <input type="text" id="addRoomType" style="width: 100%; margin-bottom: 10px;">
+            <label>Вместимость:</label>
+            <input type="number" id="addCapacity" style="width: 100%; margin-bottom: 10px;">
+            <label>Ежедневная ставка:</label>
+            <input type="number" id="addDailyRate" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="addAccommodation()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeAddModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+
+    <!-- Модальное окно для редактирования номера -->
+    <div id="editModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Редактировать номер</h3>
+        <form id="editForm">
+            <input type="hidden" id="editRoomId">
+            <label>Тип комнаты:</label>
+            <input type="text" id="editRoomType" style="width: 100%; margin-bottom: 10px;">
+            <label>Вместимость:</label>
+            <input type="number" id="editCapacity" style="width: 100%; margin-bottom: 10px;">
+            <label>Ежедневная ставка:</label>
+            <input type="number" id="editDailyRate" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="updateAccommodation()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Функция для загрузки номеров с учетом offset и limit
+    async function loadAccommodations() {
+        const offset = document.getElementById('offset').value;
+        const limit = document.getElementById('limit').value;
+        
+        try {
+            const response = await fetch(`/accommodations/all?offset=${offset}&limit=${limit}`);
+            const accommodations = await response.json();
+            const tableBody = document.querySelector('#accommodationsTable tbody');
+            tableBody.innerHTML = ''; // Очистить текущую таблицу
+
+            if (accommodations.length > 0) {
+                accommodations.forEach(accommodation => {
+                    const row = document.createElement('tr');
+                    row.id = `accommodation-row-${accommodation.id}`;
+                    row.innerHTML = `
+                        <td style="padding: 10px; border: 1px solid #ddd;">${accommodation.room_type}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${accommodation.capacity}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${accommodation.daily_rate}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                            <button 
+                                style="margin-right: 5px; padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;"
+                                onclick="openEditModal('${accommodation.id}', '${accommodation.room_type}', ${accommodation.capacity}, ${accommodation.daily_rate})">
+                                Изменить
+                            </button>
+                            <button 
+                                style="padding: 5px 10px; background-color: #f44336; color: white; border: none; cursor: pointer;" 
+                                onclick="deleteAccommodation('${accommodation.id}')">
+                                Удалить
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" style="padding: 10px; text-align: center; color: #666;">Нет данных для отображения</td>`;
+                tableBody.appendChild(row);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки номеров:', error);
+            alert('Ошибка при загрузке данных');
+        }
+    }
+
+    // Вызов загрузки номеров при старте страницы
+    window.onload = loadAccommodations;
+
+    // Функции для добавления номера
+    function openAddModal() {
+        document.getElementById('addModal').style.display = 'block';
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    async function addAccommodation() {
+        const roomType = document.getElementById('addRoomType').value;
+        const capacity = document.getElementById('addCapacity').value;
+        const dailyRate = document.getElementById('addDailyRate').value;
+
+        if (!roomType || !capacity || !dailyRate) {
+            alert('Пожалуйста, заполните все поля');
+            return;
+        }
+
+        const data = { room_type: roomType, capacity: capacity, daily_rate: dailyRate };
+
+        try {
+            const response = await fetch('/accommodations/add_accommodations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('Номер успешно добавлен');
+                loadAccommodations(); // Перезагружаем список номеров
+                closeAddModal(); // Закрываем окно
+            } else {
+                alert('Ошибка при добавлении номера');
+            }
+        } catch (error) {
+            console.error('Ошибка добавления номера:', error);
+            alert('Ошибка при добавлении номера');
+        }
+    }
+
+    // Функции для редактирования номера
+    function openEditModal(id, roomType, capacity, dailyRate) {
+        document.getElementById('editRoomId').value = id;
+        document.getElementById('editRoomType').value = roomType;
+        document.getElementById('editCapacity').value = capacity;
+        document.getElementById('editDailyRate').value = dailyRate;
+        document.getElementById('editModal').style.display = 'block';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function updateAccommodation() {
+        const id = document.getElementById('editRoomId').value;
+        const roomType = document.getElementById('editRoomType').value;
+        const capacity = document.getElementById('editCapacity').value;
+        const dailyRate = document.getElementById('editDailyRate').value;
+
+        if (!roomType || !capacity || !dailyRate) {
+            alert('Пожалуйста, заполните все поля');
+            return;
+        }
+
+        const data = { room_type: roomType, capacity: capacity, daily_rate: dailyRate };
+
+        try {
+            const response = await fetch(`/accommodations/edit/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('Данные номера обновлены');
+                loadAccommodations(); // Перезагружаем список номеров
+                closeEditModal(); // Закрываем окно
+            } else {
+                alert('Ошибка при обновлении номера');
+            }
+        } catch (error) {
+            console.error('Ошибка обновления номера:', error);
+            alert('Ошибка при обновлении номера');
+        }
+    }
+
+    // Функция для удаления номера
+    async function deleteAccommodation(id) {
+        const confirmation = confirm('Вы уверены, что хотите удалить этот номер?');
+        if (confirmation) {
+            try {
+                const response = await fetch(`/accommodations/delete/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    alert('Номер успешно удален');
+                    loadAccommodations(); // Перезагружаем список номеров
+                } else {
+                    alert('Ошибка при удалении номера');
+                }
+            } catch (error) {
+                console.error('Ошибка удаления номера:', error);
+                alert('Ошибка при удалении номера');
+            }
+        }
+    }
+</script>
+{% endblock %}

@@ -28,7 +28,7 @@ async def add_procedure(
     return {"detail": "Успешно"}
 
 
-@router.delete("/{procedure_id}")
+@router.delete("/delete/{procedure_id}")
 async def remove_procedure(
     procedure_id: int,
 ):
@@ -39,7 +39,7 @@ async def remove_procedure(
     return {"detail": "Успешно удалёно"}
 
 
-@router.patch("/{procedure_id}")
+@router.patch("/edit/{procedure_id}")
 async def update_procedure(
     procedure_id: int,
     SNewProcedure: SNewProcedure,  

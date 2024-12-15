@@ -6,6 +6,6 @@ class SNewBooking(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     client_id: int
     accommodation_id: int
-    check_in_date: int
+    check_in_date: date
     check_out_date: date
     status: int

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin: 20px;">
+    <h2>Общее количество записей</h2>
+
+    <!-- Статистика без диаграммы -->
+    <ul>
+        <li><strong>Клиенты:</strong> {{ all_count.count_client }}</li>
+        <li><strong>Кабинеты:</strong> {{ all_count.count_accommodations }}</li>
+        <li><strong>Использование кабинетов:</strong> {{ all_count.count_accommodations_usage }}</li>
+        <li><strong>Бронирования:</strong> {{ all_count.count_bookings }}</li>
+        <li><strong>Записи на процедуры:</strong> {{ all_count.count_procedure_appointment }}</li>
+        <li><strong>Процедуры:</strong> {{ all_count.count_procedures }}</li>
+        <li><strong>Использование комнат:</strong> {{ all_count.count_room_usage }}</li>
+        <li><strong>Комнаты:</strong> {{ all_count.count_rooms }}</li>
+        <li><strong>Сотрудники:</strong> {{ all_count.count_staff }}</li>
+        <li><strong>Всего записей:</strong> {{ all_count.all_count }}</li>
+    </ul>
+
+    
+</div>
+{% endblock %}

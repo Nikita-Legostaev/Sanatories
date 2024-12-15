@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="margin: 20px;">
+    <h2>Список записей на процедуру</h2>
+    
+    <!-- Панель управления для выбора диапазона -->
+    <div style="margin-bottom: 20px;">
+        <label>Показать с:</label>
+        <input type="number" id="offset" value="0" min="0" style="width: 80px; margin-right: 10px;">
+        <label>Количество на странице:</label>
+        <input type="number" id="limit" value="10" min="1" style="width: 80px; margin-right: 20px;">
+        <button onclick="loadProcedureAppointments()" 
+                style="padding: 5px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+            Применить
+        </button>
+    </div>
+
+    <!-- Кнопка для добавления новой записи -->
+    <button 
+        onclick="openAddModal()" 
+        style="margin-bottom: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+        Добавить запись
+    </button>
+
+    <!-- Таблица записей -->
+    <table id="procedureAppointmentsTable" style="width: 100%; border-collapse: collapse; text-align: left; font-family: Arial, sans-serif;">
+        <thead>
+            <tr style="background-color: #f4f4f4; border-bottom: 2px solid #ddd;">
+                <th style="padding: 10px; border: 1px solid #ddd;">ID Клиента</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">ID Процедуры</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">ID Сотрудника</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Дата</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Здесь будет отображаться список записей -->
+        </tbody>
+    </table>
+
+    <!-- Модальное окно для добавления записи -->
+    <div id="addModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Добавить новую запись на процедуру</h3>
+        <form id="addForm">
+            <label>ID Клиента:</label>
+            <input type="number" id="addClientId" style="width: 100%; margin-bottom: 10px;">
+            <label>ID Процедуры:</label>
+            <input type="number" id="addProcedureId" style="width: 100%; margin-bottom: 10px;">
+            <label>ID Сотрудника:</label>
+            <input type="number" id="addStaffId" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата:</label>
+            <input type="date" id="addDate" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="addProcedureAppointment()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeAddModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+
+    <!-- Модальное окно для редактирования записи -->
+    <div id="editModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Редактировать запись на процедуру</h3>
+        <form id="editForm">
+            <input type="hidden" id="editId">
+            <label>ID Клиента:</label>
+            <input type="number" id="editClientId" style="width: 100%; margin-bottom: 10px;">
+            <label>ID Процедуры:</label>
+            <input type="number" id="editProcedureId" style="width: 100%; margin-bottom: 10px;">
+            <label>ID Сотрудника:</label>
+            <input type="number" id="editStaffId" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата:</label>
+            <input type="date" id="editDate" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="updateProcedureAppointment()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Функция для загрузки записей на процедуры с учетом offset и limit
+    async function loadProcedureAppointments() {
+        const offset = document.getElementById('offset').value;
+        const limit = document.getElementById('limit').value;
+        
+        try {
+            const response = await fetch(`/procedure_appointment/all?offset=${offset}&limit=${limit}`);
+            const procedureAppointments = await response.json();
+            const tableBody = document.querySelector('#procedureAppointmentsTable tbody');
+            tableBody.innerHTML = ''; // Очистить текущую таблицу
+
+            if (procedureAppointments.length > 0) {
+                procedureAppointments.forEach(appointment => {
+                    const row = document.createElement('tr');
+                    row.id = `appointment-row-${appointment.id}`;
+                    row.innerHTML = `
+                        <td style="padding: 10px; border: 1px solid #ddd;">${appointment.client_id}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${appointment.procedure_id}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${appointment.staff_id}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${appointment.date}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                            <button 
+                                style="margin-right: 5px; padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;"
+                                onclick="openEditModal('${appointment.id}', ${appointment.client_id}, ${appointment.procedure_id}, ${appointment.staff_id}, '${appointment.date}')">
+                                Изменить
+                            </button>
+                            <button 
+                                style="padding: 5px 10px; background-color: #f44336; color: white; border: none; cursor: pointer;" 
+                                onclick="deleteProcedureAppointment('${appointment.id}')">
+                                Удалить
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="5" style="padding: 10px; text-align: center; color: #666;">Нет данных для отображения</td>`;
+                tableBody.appendChild(row);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки записей:', error);
+            alert('Ошибка при загрузке данных');
+        }
+    }
+
+    // Вызов загрузки записей при старте страницы
+    window.onload = loadProcedureAppointments;
+
+    // Функции для добавления записи
+    function openAddModal() {
+        document.getElementById('addModal').style.display = 'block';
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    async function addProcedureAppointment() {
+        const clientId = document.getElementById('addClientId').value;
+        const procedureId = document.getElementById('addProcedureId').value;
+        const staffId = document.getElementById('addStaffId').value;
+        const date = document.getElementById('addDate').value;
+
+        if (!clientId || !procedureId || !staffId || !date) {
+            alert("Все поля должны быть заполнены");
+            return;
+        }
+
+        const data = { client_id: clientId, procedure_id: procedureId, staff_id: staffId, date: date };
+
+        try {
+            const response = await fetch('/procedure_appointment/add_procedure_appointment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('Запись успешно добавлена!');
+                closeAddModal();
+                loadProcedureAppointments();
+            } else {
+                alert('Ошибка при добавлении записи');
+            }
+        } catch (error) {
+            console.error('Ошибка при добавлении записи:', error);
+            alert('Ошибка при добавлении записи');
+        }
+    }
+
+    // Функции для редактирования записи
+    function openEditModal(id, clientId, procedureId, staffId, date) {
+        document.getElementById('editModal').style.display = 'block';
+        document.getElementById('editId').value = id;
+        document.getElementById('editClientId').value = clientId;
+        document.getElementById('editProcedureId').value = procedureId;
+        document.getElementById('editStaffId').value = staffId;
+        document.getElementById('editDate').value = date;
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function updateProcedureAppointment() {
+        const id = document.getElementById('editId').value;
+        const clientId = document.getElementById('editClientId').value;
+        const procedureId = document.getElementById('editProcedureId').value;
+        const staffId = document.getElementById('editStaffId').value;
+        const date = document.getElementById('editDate').value;
+
+        if (!clientId || !procedureId || !staffId || !date) {
+            alert("Все поля должны быть заполнены");
+            return;
+        }
+
+        const data = { id, client_id: clientId, procedure_id: procedureId, staff_id: staffId, date };
+
+        try {
+            const response = await fetch(`/procedure_appointment/edit/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('Запись успешно обновлена!');
+                closeEditModal();
+                loadProcedureAppointments();
+            } else {
+                alert('Ошибка при обновлении записи');
+            }
+        } catch (error) {
+            console.error('Ошибка при обновлении записи:', error);
+            alert('Ошибка при обновлении записи');
+        }
+    }
+
+    // Функция для удаления записи
+    async function deleteProcedureAppointment(id) {
+        try {
+            const response = await fetch(`/procedure_appointment/delete/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                alert('Запись успешно удалена!');
+                loadProcedureAppointments();
+            } else {
+                alert('Ошибка при удалении записи');
+            }
+        } catch (error) {
+            console.error('Ошибка при удалении записи:', error);
+            alert('Ошибка при удалении записи');
+        }
+    }
+</script>
+{% endblock %}

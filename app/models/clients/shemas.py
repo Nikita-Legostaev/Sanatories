@@ -10,3 +10,9 @@ class SNewClient(BaseModel):
     birth_date: date
     email: str
     address: str
+
+class SSeacrhClient(BaseModel):
+    fullname: str | None
+    birth_date: date | None
+    email: str | None
+    address: str | None

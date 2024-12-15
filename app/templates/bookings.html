@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="margin: 20px;">
+    <h2>Список бронирований</h2>
+    
+    <!-- Панель управления для выбора диапазона -->
+    <div style="margin-bottom: 20px;">
+        <label>Показать с:</label>
+        <input type="number" id="offset" value="0" min="0" style="width: 80px; margin-right: 10px;">
+        <label>Количество на странице:</label>
+        <input type="number" id="limit" value="10" min="1" style="width: 80px; margin-right: 20px;">
+        <button onclick="loadBookings()" 
+                style="padding: 5px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+            Применить
+        </button>
+    </div>
+
+    <!-- Кнопка для добавления нового бронирования -->
+    <button 
+        onclick="openAddModal()" 
+        style="margin-bottom: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+        Добавить бронирование
+    </button>
+
+    <!-- Таблица бронирований -->
+    <table id="bookingsTable" style="width: 100%; border-collapse: collapse; text-align: left; font-family: Arial, sans-serif;">
+        <thead>
+            <tr style="background-color: #f4f4f4; border-bottom: 2px solid #ddd;">
+                <th style="padding: 10px; border: 1px solid #ddd;">ID Клиента</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">ID Проживания</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Дата заезда</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Дата выезда</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Статус</th>
+                <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Здесь будет отображаться список бронирований -->
+        </tbody>
+    </table>
+
+    <!-- Модальное окно для добавления бронирования -->
+    <div id="addModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Добавить новое бронирование</h3>
+        <form id="addForm">
+            <label>ID Клиента:</label>
+            <input type="number" id="addClientId" style="width: 100%; margin-bottom: 10px;">
+            <label>ID Проживания:</label>
+            <input type="number" id="addAccommodationId" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата заезда:</label>
+            <input type="date" id="addCheckInDate" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата выезда:</label>
+            <input type="date" id="addCheckOutDate" style="width: 100%; margin-bottom: 10px;">
+            <label>Статус:</label>
+            <input type="number" id="addStatus" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="addBooking()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeAddModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+
+    <!-- Модальное окно для редактирования бронирования -->
+    <div id="editModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <h3>Изменить данные бронирования</h3>
+        <form id="editForm">
+            <input type="hidden" id="editBookingId">
+            <label>ID Клиента:</label>
+            <input type="number" id="editClientId" style="width: 100%; margin-bottom: 10px;">
+            <label>ID Проживания:</label>
+            <input type="number" id="editAccommodationId" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата заезда:</label>
+            <input type="date" id="editCheckInDate" style="width: 100%; margin-bottom: 10px;">
+            <label>Дата выезда:</label>
+            <input type="date" id="editCheckOutDate" style="width: 100%; margin-bottom: 10px;">
+            <label>Статус:</label>
+            <input type="number" id="editStatus" style="width: 100%; margin-bottom: 20px;">
+            <button type="button" onclick="updateBooking()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">Сохранить</button>
+            <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; margin-left: 10px; background-color: #f44336; color: white; border: none; cursor: pointer;">Отмена</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Функция для загрузки бронирований с учетом offset и limit
+    async function loadBookings() {
+        const offset = document.getElementById('offset').value;
+        const limit = document.getElementById('limit').value;
+        
+        try {
+            const response = await fetch(`/bookings/all?offset=${offset}&limit=${limit}`);
+            const bookings = await response.json();
+            const tableBody = document.querySelector('#bookingsTable tbody');
+            tableBody.innerHTML = ''; // Очистить текущую таблицу
+
+            if (bookings.length > 0) {
+                bookings.forEach(booking => {
+                    const row = document.createElement('tr');
+                    row.id = `booking-row-${booking.id}`;
+                    row.innerHTML = `
+                        <td style="padding: 10px; border: 1px solid #ddd;">${booking.client_id}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${booking.accommodation_id}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${booking.check_in_date}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${booking.check_out_date}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${booking.status}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                            <button 
+                                style="margin-right: 5px; padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer;"
+                                onclick="openEditModal('${booking.id}', '${booking.client_id}', '${booking.accommodation_id}', '${booking.check_in_date}', '${booking.check_out_date}', '${booking.status}')">
+                                Изменить
+                            </button>
+                            <button 
+                                style="padding: 5px 10px; background-color: #f44336; color: white; border: none; cursor: pointer;" 
+                                onclick="deleteBooking('${booking.id}')">
+                                Удалить
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="6" style="padding: 10px; text-align: center; color: #666;">Нет данных для отображения</td>`;
+                tableBody.appendChild(row);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки бронирований:', error);
+            alert('Ошибка при загрузке данных.');
+        }
+    }
+
+    // Открытие модального окна для добавления бронирования
+    function openAddModal() {
+        document.getElementById('addModal').style.display = 'block';
+    }
+
+    // Закрытие модального окна для добавления
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    // Открытие модального окна для редактирования бронирования
+    function openEditModal(id, client_id, accommodation_id, check_in_date, check_out_date, status) {
+        document.getElementById('editBookingId').value = id;
+        document.getElementById('editClientId').value = client_id;
+        document.getElementById('editAccommodationId').value = accommodation_id;
+        document.getElementById('editCheckInDate').value = check_in_date;
+        document.getElementById('editCheckOutDate').value = check_out_date;
+        document.getElementById('editStatus').value = status;
+        document.getElementById('editModal').style.display = 'block';
+    }
+
+    // Закрытие модального окна для редактирования
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    function validateBookingData(clientId, accommodationId, checkInDate, checkOutDate, status) {
+        if (!clientId || !accommodationId || !checkInDate || !checkOutDate || !status) {
+            alert("Все поля должны быть заполнены.");
+            return false;
+        }
+
+        // Проверка даты заезда и выезда
+        if (new Date(checkInDate) > new Date(checkOutDate)) {
+            alert("Дата заезда не может быть позже даты выезда.");
+            return false;
+        }
+
+        
+
+        return true;
+    }
+
+    // Добавление нового бронирования
+    async function addBooking() {
+        const clientId = document.getElementById('addClientId').value;
+        const accommodationId = document.getElementById('addAccommodationId').value;
+        const checkInDate = document.getElementById('addCheckInDate').value;
+        const checkOutDate = document.getElementById('addCheckOutDate').value;
+        const status = document.getElementById('addStatus').value;
+
+        if (!validateBookingData(clientId, accommodationId, checkInDate, checkOutDate, status)) {
+            return;
+        }
+
+        const data = {
+            client_id: clientId,
+            accommodation_id: accommodationId,
+            check_in_date: checkInDate,
+            check_out_date: checkOutDate,
+            status: status,
+        };
+
+        try {
+            const response = await fetch('/bookings/add_bookings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('Бронирование добавлено');
+                closeAddModal();
+                loadBookings(); // Обновление таблицы
+            } else {
+                alert('Ошибка при добавлении бронирования');
+            }
+        } catch (error) {
+            console.error('Ошибка при добавлении бронирования:', error);
+            alert('Ошибка при добавлении бронирования');
+        }
+    }
+
+    // Обновление бронирования
+    async function updateBooking() {
+        const id = document.getElementById('editBookingId').value;
+        const clientId = document.getElementById('editClientId').value;
+        const accommodationId = document.getElementById('editAccommodationId').value;
+        const checkInDate = document.getElementById('editCheckInDate').value;
+        const checkOutDate = document.getElementById('editCheckOutDate').value;
+        const status = document.getElementById('editStatus').value;
+
+        if (!validateBookingData(clientId, accommodationId, checkInDate, checkOutDate, status)) {
+            return;
+        }
+
+        const data = {
+            client_id: clientId,
+            accommodation_id: accommodationId,
+            check_in_date: checkInDate,
+            check_out_date: checkOutDate,
+            status: status,
+        };
+
+        try {
+            const response = await fetch(`/bookings/edit/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('Бронирование обновлено');
+                closeEditModal();
+                loadBookings(); // Обновление таблицы
+            } else {
+                alert('Ошибка при обновлении бронирования');
+            }
+        } catch (error) {
+            console.error('Ошибка при обновлении бронирования:', error);
+            alert('Ошибка при обновлении бронирования');
+        }
+    }
+
+    // Удаление бронирования
+    async function deleteBooking(id) {
+        const confirmDelete = confirm('Вы уверены, что хотите удалить это бронирование?');
+        
+        if (confirmDelete) {
+            try {
+                const response = await fetch(`/bookings/delete/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    alert('Бронирование удалено');
+                    loadBookings(); // Обновление таблицы
+                } else {
+                    alert('Ошибка при удалении бронирования');
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении бронирования:', error);
+                alert('Ошибка при удалении бронирования');
+            }
+        }
+    }
+
+    // Загрузка списка бронирований при загрузке страницы
+    window.onload = loadBookings;
+</script>
+{% endblock %}

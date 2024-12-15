@@ -7,7 +7,5 @@ class Accommodations_usage(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True) 
     accommodations_id: Mapped[int] = mapped_column(ForeignKey("accommodations.id"))
-    room_type: Mapped[str]
     start_data: Mapped[Date] = mapped_column(type_=Date)
     end_data: Mapped[Date] = mapped_column(type_=Date)
-    capacity: Mapped[int]

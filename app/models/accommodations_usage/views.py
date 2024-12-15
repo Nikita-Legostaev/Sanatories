@@ -22,15 +22,13 @@ async def add_accommodations_usage(
 ):
     added_accommodations_usage = await AccommodationsUsageRepositories.add(
         accommodations_id=SNewAccommodationsUsage.accommodations_id,
-        room_type=SNewAccommodationsUsage.room_type,
         start_data=SNewAccommodationsUsage.start_data,
         end_data=SNewAccommodationsUsage.end_data,
-        capacity=SNewAccommodationsUsage.capacity, 
     )
     return {"detail": "Успешно"}
 
 
-@router.delete("/{accommodations_usage_id}")
+@router.delete("/delete/{accommodations_usage_id}")
 async def remove_accommodations(
     accommodations_usage_id: int,
 ):
@@ -41,7 +39,7 @@ async def remove_accommodations(
     return {"detail": "Успешно удалёно"}
 
 
-@router.patch("/{accommodations_usage_id}")
+@router.patch("/edit/{accommodations_usage_id}")
 async def update_accommodations_usage(
     accommodations_usage_id: int,
     SNewAccommodations: SNewAccommodationsUsage,  
